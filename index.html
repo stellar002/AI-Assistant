@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI Assistant - World's Best</title>
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 123, 255, 0.1), transparent 70%);
+            animation: pulseBg 10s infinite;
+            z-index: -1;
+        }
+        @keyframes pulseBg {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+        .container {
+            background: rgba(27, 38, 59, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 0 40px rgba(0, 123, 255, 0.8), inset 0 0 15px rgba(0, 123, 255, 0.2);
+            width: 550px;
+            color: #ffffff;
+            position: relative;
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        h1 {
+            text-align: center;
+            color: #00d4ff;
+            font-size: 32px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 10px #00d4ff, 0 0 20px #00d4ff;
+        }
+        #conversation {
+            height: 380px;
+            overflow-y: auto;
+            border: 2px solid #00b4d8;
+            border-radius: 15px;
+            padding: 20px;
+            background: rgba(13, 27, 42, 0.8);
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        #conversation p {
+            margin: 8px 0;
+            opacity: 0;
+            animation: typeEffect 0.5s forwards;
+        }
+        @keyframes typeEffect {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #conversation p.user { color: #90e0ef; }
+        #conversation p.jarvis { color: #48cae4; }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        #start-btn, #help-btn {
+            padding: 15px;
+            background: linear-gradient(45deg, #007bff, #00d4ff);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+        }
+        #start-btn:hover:not(:disabled), #help-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 123, 255, 0.9);
+        }
+        #start-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        #start-btn.listening::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 1s infinite;
+        }
+        #help-btn {
+            background: linear-gradient(45deg, #ff4500, #ff8c00);
+            width: 50px;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+        }
+        #status {
+            text-align: center;
+            font-size: 14px;
+            color: #90e0ef;
+            margin-top: 15px;
+            text-shadow: 0 0 5px #90e0ef;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: rgba(27, 38, 59, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(0, 123, 255, 0.7);
+        }
+        .modal-content h2 {
+            color: #00d4ff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .modal-content ul {
+            list-style: none;
+            padding: 0;
+        }
+        .modal-content li {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 5px;
+        }
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #ff4500;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Jarvis AI Assistant</h1>
+        <div id="conversation"></div>
+        <div class="button-container">
+            <button id="start-btn">Activate Jarvis</button>
+            <button id="help-btn">?</button>
+        </div>
+        <div id="status">Status: Ready</div>
+    </div>
+
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Available Commands</h2>
+            <ul>
+                <li>"hello / hi / hey jarvis" - Greet Jarvis</li>
+                <li>"my name is [name]" - Set your name</li>
+                <li>"what is my name / tell me my name" - Recall your name</li>
+                <li>"i am [number] years old" - Set your age</li>
+                <li>"how old am i / what is my age" - Recall your age</li>
+                <li>"my favorite color is [color]" - Set your favorite color</li>
+                <li>"what is my favorite color" - Recall your favorite color</li>
+                <li>"what time is it / tell me the time" - Get the current time</li>
+                <li>"what is the date / tell me the date" - Get the current date</li>
+                <li>"search for [query] / look up [query]" - Search Google</li>
+                <li>"what is the weather / tell me the weather" - Mock weather update</li>
+                <li>"what is [num1] [plus/minus/times/divided by] [num2]" - Perform math</li>
+                <li>"open [youtube/google/wikipedia]" - Open a website</li>
+                <li>"tell me a joke" - Hear a random joke</li>
+                <li>"tell me a fact / random fact" - Hear a random fact</li>
+                <li>"stop / shut down" - Stop the assistant</li>
+                <li>"set a reminder for [number] [minutes/seconds]" - Set a reminder</li>
+                <li>"play a sound" - Play a sound effect</li>
+                <li>"what’s the news / tell me the news" - Mock news headlines</li>
+                <li>"translate [word] to [spanish/french]" - Translate a word</li>
+                <li>"set a goal to [goal]" - Set a personal goal</li>
+                <li>"what are my goals / check goals" - List your goals</li>
+                <li>"start a [number] [seconds/minutes] timer" - Start a timer</li>
+                <li>"convert [number] [kilometers/miles] to [miles/kilometers]" - Convert units</li>
+                <li>"tell me about [ai/space]" - Get info on a topic</li>
+                <li>"change greeting to [greeting]" - Customize greeting</li>
+                <li>"schedule an event for [date] at [time]" - Schedule an event</li>
+                <li>"what’s on my schedule / list events" - List scheduled events</li>
+                <li>"generate a password" - Create a random password</li>
+                <li>"convert [text] to morse code" - Convert to Morse code</li>
+                <li>"count the words in [phrase]" - Count words in a phrase</li>
+                <li>"set an alarm for [number] [seconds/minutes]" - Set an alarm</li>
+                <li>"check my internet speed" - Simulate internet speed test</li>
+                <li>"encrypt [text]" - Encrypt text (Caesar cipher)</li>
+                <li>"decrypt [text]" - Decrypt text (Caesar cipher)</li>
+                <li>"give me a motivational quote / motivate me" - Hear a quote</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            if (!('webkitSpeechRecognition' in window && 'speechSynthesis' in window)) {
+                alert('Your browser does not support the Web Speech API. Please use Google Chrome.');
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            const synth = window.speechSynthesis;
+            let voices = [];
+            function loadVoices() {
+                voices = synth.getVoices();
+            }
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = loadVoices;
+            }
+            loadVoices();
+
+            const startBtn = document.getElementById('start-btn');
+            const helpBtn = document.getElementById('help-btn');
+            const helpModal = document.getElementById('help-modal');
+            const closeBtn = document.querySelector('.close-btn');
+            const conversationDiv = document.getElementById('conversation');
+            const statusDiv = document.getElementById('status');
+
+            let memory = JSON.parse(localStorage.getItem('jarvisMemory')) || {
+                name: '',
+                age: '',
+                favoriteColor: '',
+                lastCommand: '',
+                goals: [],
+                customGreeting: 'Greetings! I am Jarvis, the world’s finest assistant. How may I serve you?',
+                events: []
+            };
+
+            function saveMemory() {
+                localStorage.setItem('jarvisMemory', JSON.stringify(memory));
+            }
+
+            function appendMessage(message, className) {
+                const p = document.createElement('p');
+                p.textContent = message;
+                p.className = className;
+                conversationDiv.appendChild(p);
+                conversationDiv.scrollTop = conversationDiv.scrollHeight;
+            }
+
+            function speak(text) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voice = voices.find(v => v.name.includes('Google UK English Male')) || voices[0];
+                if (voice) {
+                    utterance.voice = voice;
+                    utterance.lang = 'en-GB';
+                }
+                utterance.rate = 1.1;
+                synth.speak(utterance);
+            }
+
+            function updateStatus(text) {
+                statusDiv.textContent = `Status: ${text}`;
+            }
+
+            startBtn.addEventListener('click', () => {
+                recognition.start();
+                startBtn.disabled = true;
+                startBtn.classList.add('listening');
+                updateStatus('Listening...');
+                const welcomeMsg = memory.name ? 
+                    `${memory.customGreeting.replace('Greetings', 'Welcome back')}, ${memory.name}.` : 
+                    memory.customGreeting;
+                appendMessage(`Jarvis: ${welcomeMsg}`, 'jarvis');
+                speak(welcomeMsg);
+            });
+
+            helpBtn.addEventListener('click', () => {
+                helpModal.style.display = 'flex';
+            });
+
+            closeBtn.addEventListener('click', () => {
+                helpModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target === helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+                appendMessage(`You: ${transcript}`, 'user');
+                memory.lastCommand = transcript;
+                saveMemory();
+                processCommand(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                appendMessage('Jarvis: Apologies, sir. There was an issue. Retrying...', 'jarvis');
+                speak('Apologies, sir. There was an issue. Retrying...');
+                recognition.stop();
+                setTimeout(() => recognition.start(), 1000);
+            };
+
+            recognition.onend = () => {
+                startBtn.disabled = false;
+                startBtn.classList.remove('listening');
+                updateStatus('Ready');
+            };
+
+            function processCommand(command) {
+                let response;
+
+                if (command.includes('hello') || command.includes('hi') || command.includes('hey jarvis')) {
+                    response = memory.name ? `Greetings, ${memory.name}. How may I assist?` : 'Hello! May I have your name, sir?';
+                } else if (command.includes('my name is')) {
+                    memory.name = command.split('my name is')[1].trim();
+                    response = `Pleased to meet you, ${memory.name}. How can I assist?`;
+                    saveMemory();
+                } else if (command.includes('what is my name') || command.includes('tell me my name')) {
+                    response = memory.name ? `Your name is ${memory.name}, sir.` : 'You haven’t told me your name yet.';
+                } else if (command.includes('i am') && command.includes('years old')) {
+                    const ageMatch = command.match(/\d+/);
+                    if (ageMatch) {
+                        memory.age = ageMatch[0];
+                        response = `Understood, ${memory.name || 'sir'}. You’re ${memory.age} years old.`;
+                        saveMemory();
+                    } else {
+                        response = 'I didn’t catch your age. Could you repeat it?';
+                    }
+                } else if (command.includes('how old am i') || command.includes('what is my age')) {
+                    response = memory.age ? `You are ${memory.age} years old, ${memory.name || 'sir'}.` : 'I don’t know your age yet.';
+                } else if (command.includes('my favorite color is')) {
+                    memory.favoriteColor = command.split('my favorite color is')[1].trim();
+                    response = `Noted, ${memory.name || 'sir'}. Your favorite color is ${memory.favoriteColor}.`;
+                    saveMemory();
+                } else if (command.includes('what is my favorite color')) {
+                    response = memory.favoriteColor ? `Your favorite color is ${memory.favoriteColor}, ${memory.name || 'sir'}.` : 'You haven’t shared your favorite color yet.';
+                } else if (command.includes('what time is it') || command.includes('tell me the time')) {
+                    const now = new Date();
+                    const time = now.toLocaleTimeString();
+                    response = `It’s currently ${time}, ${memory.name || 'sir'}.`;
+                } else if (command.includes('what is the date') || command.includes('tell me the date')) {
+                    const now = new Date();
+                    const date = now.toLocaleDateString();
+                    response = `Today is ${date}, ${memory.name || 'sir'}.`;
+                } else if (command.includes('search for') || command.includes('look up')) {
+                    let query = command.includes('search for') ? command.split('search for')[1].trim() : command.split('look up')[1].trim();
+                    const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    window.open(url, '_blank');
+                    response = `Searching for "${query}", ${memory.name || 'sir'}. Results are opening now.`;
+                } else if (command.includes('what is the weather') || command.includes('tell me the weather')) {
+                    response = `Simulating weather for ${memory.name || 'sir'}: Sunny, 72°F. Real data requires an API!`;
+                } else if (command.includes('what is') && (command.includes('plus') || command.includes('minus') || command.includes('times') || command.includes('divided by'))) {
+                    try {
+                        const parts = command.split(' ');
+                        const num1 = parseFloat(parts[parts.indexOf('is') + 1]);
+                        const operator = parts.find(p => ['plus', 'minus', 'times', 'divided'].includes(p));
+                        const num2 = parseFloat(parts[parts.indexOf(operator) + (operator === 'divided' ? 2 : 1)]);
+                        let result;
+                        if (operator === 'plus') result = num1 + num2;
+                        else if (operator === 'minus') result = num1 - num2;
+                        else if (operator === 'times') result = num1 * num2;
+                        else if (operator === 'divided') result = num1 / num2;
+                        response = `${num1} ${operator.replace('divided', 'divided by')} ${num2} equals ${result}, ${memory.name || 'sir'}.`;
+                    } catch {
+                        response = 'I couldn’t parse that calculation. Try "What is 5 plus 3?"';
+                    }
+                } else if (command.includes('open')) {
+                    const site = command.split('open')[1].trim().toLowerCase();
+                    const sites = {
+                        'youtube': 'https://www.youtube.com',
+                        'google': 'https://www.google.com',
+                        'wikipedia': 'https://www.wikipedia.org'
+                    };
+                    if (sites[site]) {
+                        window.open(sites[site], '_blank');
+                        response = `Opening ${site}, ${memory.name || 'sir'}.`;
+                    } else {
+                        response = `I don’t know how to open "${site}". Try "open YouTube".`;
+                    }
+                } else if (command.includes('tell me a joke')) {
+                    const jokes = ['Why don’t skeletons fight? No guts!', 'What’s fake spaghetti? An impasta!'];
+                    response = jokes[Math.floor(Math.random() * jokes.length)];
+                } else if (command.includes('tell me a fact') || command.includes('random fact')) {
+                    const facts = ['The shortest war lasted 38 minutes.', 'Honey never spoils!'];
+                    response = facts[Math.floor(Math.random() * facts.length)];
+                } else if (command.includes('stop') || command.includes('shut down')) {
+                    recognition.stop();
+                    response = 'Shutting down, sir. Until next time.';
+                } else if (command.includes('set a reminder for')) {
+                    const timeMatch = command.match(/(\d+)\s*(minutes?|seconds?)/);
+                    if (timeMatch) {
+                        const amount = parseInt(timeMatch[1]);
+                        const unit = timeMatch[2].startsWith('min') ? 'minutes' : 'seconds';
+                        const ms = unit === 'minutes' ? amount * 60000 : amount * 1000;
+                        setTimeout(() => {
+                            appendMessage('Jarvis: Reminder: Your time is up!', 'jarvis');
+                            speak('Reminder: Your time is up!');
+                            alert('Jarvis: Your reminder is up!');
+                        }, ms);
+                        response = `Reminder set for ${amount} ${unit}, ${memory.name || 'sir'}.`;
+                    } else {
+                        response = 'Please specify a time, like "set a reminder for 5 minutes".';
+                    }
+                } else if (command.includes('play a sound')) {
+                    const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAABmAAACABAAAABXQVZHAgAAAAA=');
+                    audio.play();
+                    response = `Playing a sound for you, ${memory.name || 'sir'}.`;
+                } else if (command.includes('what’s the news') || command.includes('tell me the news')) {
+                    response = `Here’s mock news for ${memory.name || 'sir'}: "AI advances in 2025!" Real news needs an API.`;
+                } else if (command.includes('translate') && command.includes('to')) {
+                    const parts = command.split('to');
+                    const word = parts[0].replace('translate', '').trim();
+                    const lang = parts[1].trim().toLowerCase();
+                    const translations = {
+                        'hello': { 'spanish': 'hola', 'french': 'bonjour' },
+                        'goodbye': { 'spanish': 'adios', 'french': 'au revoir' }
+                    };
+                    response = translations[word] && translations[word][lang] ? 
+                        `"${word}" in ${lang} is "${translations[word][lang]}", ${memory.name || 'sir'}.` : 
+                        `I can’t translate "${word}" to ${lang}. Try "translate hello to Spanish".`;
+                } else if (command.includes('set a goal to')) {
+                    const goal = command.split('set a goal to')[1].trim();
+                    memory.goals.push(goal);
+                    saveMemory();
+                    response = `Goal set: "${goal}", ${memory.name || 'sir'}.`;
+                } else if (command.includes('what are my goals') || command.includes('check goals')) {
+                    response = memory.goals.length ? 
+                        `Your goals, ${memory.name || 'sir'}: ${memory.goals.join(', ')}.` : 
+                        'You haven’t set any goals yet.';
+                } else if (command.includes('start a') && command.includes('timer')) {
+                    const timeMatch = command.match(/(\d+)\s*(seconds?|minutes?)/);
+                    if (timeMatch) {
+                        let seconds = parseInt(timeMatch[1]) * (timeMatch[2].startsWith('min') ? 60 : 1);
+                        const interval = setInterval(() => {
+                            if (seconds <= 0) {
+                                clearInterval(interval);
+                                appendMessage('Jarvis: Timer complete!', 'jarvis');
+                                speak('Timer complete!');
+                                alert('Jarvis: Timer is up!');
+                            } else {
+                                appendMessage(`Jarvis: ${seconds} seconds remaining...`, 'jarvis');
+                                seconds--;
+                            }
+                        }, 1000);
+                        response = `Timer started for ${timeMatch[1]} ${timeMatch[2]}, ${memory.name || 'sir'}.`;
+                    } else {
+                        response = 'Please specify a time, like "start a 10-second timer".';
+                    }
+                } else if (command.includes('convert') && command.includes('to') && !command.includes('morse')) {
+                    const parts = command.split('to');
+                    const from = parts[0].replace('convert', '').trim().split(' ');
+                    const value = parseFloat(from[0]);
+                    const fromUnit = from[1];
+                    const toUnit = parts[1].trim();
+                    const conversions = {
+                        'kilometers': { 'miles': value => value * 0.621371 },
+                        'miles': { 'kilometers': value => value * 1.60934 }
+                    };
+                    if (conversions[fromUnit] && conversions[fromUnit][toUnit]) {
+                        const result = conversions[fromUnit][toUnit](value);
+                        response = `${value} ${fromUnit} is ${result.toFixed(2)} ${toUnit}, ${memory.name || 'sir'}.`;
+                    } else {
+                        response = 'I can’t convert that. Try "convert 10 kilometers to miles".';
+                    }
+                } else if (command.includes('tell me about')) {
+                    const topic = command.split('tell me about')[1].trim().toLowerCase();
+                    const info = {
+                        'ai': 'Artificial Intelligence simulates human intelligence in machines.',
+                        'space': 'Space is the vast expanse beyond Earth, home to stars and planets.'
+                    };
+                    response = info[topic] ? `${info[topic]} Interesting, isn’t it, ${memory.name || 'sir'}?` : 
+                        `I don’t have info on "${topic}". Try "tell me about AI".`;
+                } else if (command.includes('change greeting to')) {
+                    memory.customGreeting = command.split('change greeting to')[1].trim();
+                    saveMemory();
+                    response = `Greeting changed to "${memory.customGreeting}", ${memory.name || 'sir'}.`;
+                } else if (command.includes('schedule an event for')) {
+                    const parts = command.split('at');
+                    const dateStr = parts[0].replace('schedule an event for', '').trim();
+                    const timeStr = parts[1]?.trim();
+                    const event = { date: dateStr, time: timeStr || 'anytime' };
+                    memory.events.push(event);
+                    saveMemory();
+                    response = `Event scheduled for ${dateStr} at ${event.time}, ${memory.name || 'sir'}.`;
+                } else if (command.includes('what’s on my schedule') || command.includes('list events')) {
+                    response = memory.events.length ? 
+                        `Your schedule, ${memory.name || 'sir'}: ${memory.events.map(e => `${e.date} at ${e.time}`).join(', ')}.` : 
+                        'Your schedule is empty.';
+                } else if (command.includes('generate a password')) {
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+                    let password = '';
+                    for (let i = 0; i < 12; i++) password += chars.charAt(Math.floor(Math.random() * chars.length));
+                    response = `Here’s a secure password, ${memory.name || 'sir'}: ${password}.`;
+                } else if (command.includes('convert') && command.includes('to morse code')) {
+                    const text = command.split('convert')[1].split('to morse code')[0].trim().toUpperCase();
+                    const morse = {
+                        'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....', 
+                        'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 
+                        'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 
+                        'Y': '-.--', 'Z': '--..', ' ': ' '
+                    };
+                    response = text.split('').map(c => morse[c] || '').join(' ') || 'I can’t convert that.';
+                    response = `"${text}" in Morse code is ${response}, ${memory.name || 'sir'}.`;
+                } else if (command.includes('count the words in')) {
+                    const phrase = command.split('count the words in')[1].trim();
+                    const count = phrase.split(' ').length;
+                    response = `There are ${count} words in "${phrase}", ${memory.name || 'sir'}.`;
+                } else if (command.includes('set an alarm for')) {
+                    const timeMatch = command.match(/(\d+)\s*(seconds?|minutes?)/);
+                    if (timeMatch) {
+                        const amount = parseInt(timeMatch[1]);
+                        const unit = timeMatch[2].startsWith('min') ? 'minutes' : 'seconds';
+                        const ms = unit === 'minutes' ? amount * 60000 : amount * 1000;
+                        setTimeout(() => {
+                            const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAABmAAACABAAAABXQVZHAgAAAAA=');
+                            audio.play();
+                            appendMessage('Jarvis: Alarm! Time’s up!', 'jarvis');
+                            speak('Alarm! Time’s up!');
+                            alert('Jarvis: Alarm triggered!');
+                        }, ms);
+                        response = `Alarm set for ${amount} ${unit}, ${memory.name || 'sir'}.`;
+                    } else {
+                        response = 'Please specify a time, like "set an alarm for 10 seconds".';
+                    }
+                } else if (command.includes('check my internet speed')) {
+                    response = `Simulating speed test for ${memory.name || 'sir'}: 50 Mbps download, 20 Mbps upload. Real test needs an API!`;
+                } else if (command.includes('encrypt')) {
+                    const text = command.split('encrypt')[1].trim().toLowerCase();
+                    const encrypted = text.split('').map(c => 
+                        c >= 'a' && c <= 'z' ? String.fromCharCode((c.charCodeAt(0) - 97 + 1) % 26 + 97) : c
+                    ).join('');
+                    response = `Encrypted "${text}" to "${encrypted}", ${memory.name || 'sir'}.`;
+                } else if (command.includes('decrypt')) {
+                    const text = command.split('decrypt')[1].trim().toLowerCase();
+                    const decrypted = text.split('').map(c => 
+                        c >= 'a' && c <= 'z' ? String.fromCharCode((c.charCodeAt(0) - 97 - 1 + 26) % 26 + 97) : c
+                    ).join('');
+                    response = `Decrypted "${text}" to "${decrypted}", ${memory.name || 'sir'}.`;
+                } else if (command.includes('give me a motivational quote') || command.includes('motivate me')) {
+                    const quotes = [
+                        'The only limit to our realization of tomorrow is our doubts of today.',
+                        'You are never too old to set another goal or to dream a new dream.'
+                    ];
+                    response = quotes[Math.floor(Math.random() * quotes.length)] + ` Stay inspired, ${memory.name || 'sir'}!`;
+                } else {
+                    response = 'I’m not sure how to assist with that. Try asking about time, a password, or a quote! Say "help" to see all commands.';
+                }
+                appendMessage(`Jarvis: ${response}`, 'jarvis');
+                speak(response);
+            }
+        })();
+    </script>
+</body>
+</html>
